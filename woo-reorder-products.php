@@ -9,7 +9,9 @@ Text Domain:       woo-reorder-products
 GitHub Plugin URI: https://github.com/dataforge/woo-reorder-products
 */
 
-if (!defined('ABSPATH')) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 class WooCommerce_Reorder_Products_Plugin {
 
