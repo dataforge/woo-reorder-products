@@ -26,7 +26,7 @@ class WooCommerce_Reorder_Products_Plugin {
         add_submenu_page(
             'woocommerce',
             'WooCommerce Reorder Products',
-            'WooCommerce Reorder Products',
+            'Woo Reorder Products',
             'manage_woocommerce',
             'woo-reorder-products',
             array($this, 'page_callback')
