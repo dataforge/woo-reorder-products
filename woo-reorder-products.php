@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name:       WoocCommerce Reorder Products
+Plugin Name:       WooCommerce Reorder Products
 Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
 Version:           1.0.0
 Author:            Your Name
@@ -12,7 +12,7 @@ GitHub Plugin URI: https://github.com/dataforge/woo-reorder-products
 
 if (!defined('ABSPATH')) exit;
 
-class DF_Reorder_Products_Plugin {
+class WooCommerce_Reorder_Products_Plugin {
 
     public function __construct() {
         // Admin menu
@@ -26,8 +26,8 @@ class DF_Reorder_Products_Plugin {
     public function add_submenu() {
         add_submenu_page(
             'woocommerce',
-            'DF - Reorder products',
-            'DF - Reorder products',
+            'WooCommerce Reorder Products',
+            'WooCommerce Reorder Products',
             'manage_woocommerce',
             'df-reorder-products',
             array($this, 'page_callback')
@@ -98,7 +98,7 @@ class DF_Reorder_Products_Plugin {
             'fields'         => 'ids',
         );
         $product_ids = get_posts($args);
-        echo '<div class="wrap"><h1>DF - Reorder products</h1>';
+        echo '<div class="wrap"><h1>WooCommerce Reorder Products</h1>';
         echo '<p>Drag and drop products to reorder them. The top item will be the most recent. Click "Save" to apply the new order.</p>';
         echo '<ul id="df-reorder-products-list">';
         $i = 1;
@@ -181,5 +181,5 @@ class DF_Reorder_Products_Plugin {
 }
 
 if (is_admin()) {
-    new DF_Reorder_Products_Plugin();
+    new WooCommerce_Reorder_Products_Plugin();
 }

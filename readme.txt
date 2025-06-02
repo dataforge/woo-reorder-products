@@ -1,4 +1,4 @@
-=== DF - Reorder Products for WooCommerce ===
+=== WooCommerce Reorder Products ===
 Contributors: yourname
 Tags: woocommerce, reorder, products, drag and drop
 Requires at least: 5.0
@@ -11,7 +11,7 @@ Adds a drag-and-drop interface to reorder WooCommerce products by date.
 
 == Description ==
 
-DF - Reorder Products for WooCommerce adds a simple drag-and-drop interface to the WooCommerce admin, allowing you to reorder products by date. The top item will be the most recent. Click "Save" to apply the new order.
+WooCommerce Reorder Products adds a simple drag-and-drop interface to the WooCommerce admin, allowing you to reorder products by date. The top item will be the most recent. Click "Save" to apply the new order.
 
 == Installation ==
 
