@@ -17,7 +17,7 @@ WooCommerce Reorder Products adds a simple drag-and-drop interface to the WooCom
 
 1. Upload the plugin files to the `/wp-content/plugins/woo-reorder-products` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Use the WooCommerce > DF - Reorder products menu to reorder your products.
+3. Use the WooCommerce > WooCommerce Reorder Products menu to reorder your products.
 
 == Frequently Asked Questions ==
 
