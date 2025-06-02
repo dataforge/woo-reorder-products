@@ -2,7 +2,7 @@
 /*
 Plugin Name:       Woo Reorder Products
 Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
-Version:           1.0.0
+Version:           1.10
 Author:            Dataforge
 License:           GPL2
 Text Domain:       woo-reorder-products
