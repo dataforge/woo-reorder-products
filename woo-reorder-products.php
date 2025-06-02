@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name:       DF - Reorder Products for WooCommerce
+Plugin Name:       WoocCommerce Reorder Products
 Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
 Version:           1.0.0
 Author:            Your Name
@@ -37,11 +37,11 @@ class DF_Reorder_Products_Plugin {
     public function enqueue_scripts($hook) {
         if ($hook !== 'woocommerce_page_df-reorder-products') return;
         wp_enqueue_script('jquery-ui-sortable');
-        wp_enqueue_style('df-reorder-products-style', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-        wp_add_inline_style('df-reorder-products-style', '
+        wp_add_inline_style('wp-admin', '
             #df-reorder-products-list { list-style: none; margin: 0; padding: 0; max-width: 700px; }
             #df-reorder-products-list li { display: flex; align-items: center; padding: 8px 12px; border: 1px solid #ddd; margin-bottom: 4px; background: #fff; cursor: grab; }
             .df-reorder-products-handle { cursor: grab; margin-right: 16px; color: #888; font-size: 1.2em; }
+            .df-reorder-products-grip { font-size: 1.2em; color: #888; display: inline-block; line-height: 1; }
             .df-reorder-products-index { width: 32px; text-align: right; margin-right: 12px; color: #666; }
             .df-reorder-products-title { flex: 1; }
             .df-reorder-products-date { color: #888; font-size: 0.95em; margin-left: 16px; }
@@ -107,7 +107,7 @@ class DF_Reorder_Products_Plugin {
             $date = get_the_date('Y-m-d H:i', $pid);
             $thumb = get_the_post_thumbnail($pid, array(32,32), array('style'=>'width:32px;height:32px;margin-right:12px;'));
             echo '<li data-product-id="' . esc_attr($pid) . '">';
-            echo '<span class="df-reorder-products-handle"><i class="fas fa-grip-vertical"></i></span>';
+            echo '<span class="df-reorder-products-handle"><span class="df-reorder-products-grip">⋮⋮</span></span>';
             echo '<span class="df-reorder-products-index">' . $i . '</span>';
             echo $thumb;
             echo '<span class="df-reorder-products-title">' . esc_html($title) . '</span>';
