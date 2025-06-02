@@ -1,10 +1,13 @@
 <?php
 /*
-Plugin Name: DF - Reorder Products for WooCommerce
-Description: Adds a drag-and-drop interface to reorder WooCommerce products by date.
-Version: 1.0.0
-Author: Your Name
-License: GPL2
+Plugin Name:       DF - Reorder Products for WooCommerce
+Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
+Version:           1.0.0
+Author:            Your Name
+License:           GPL2
+Domain Path:       /languages
+Text Domain:       woo-reorder-products
+GitHub Plugin URI: https://github.com/dataforge/woo-reorder-products
 */
 
 if (!defined('ABSPATH')) exit;
