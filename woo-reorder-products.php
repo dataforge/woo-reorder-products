@@ -220,23 +220,24 @@ class WooCommerce_Reorder_Products_Plugin {
         $now_ts = strtotime($now);
         $interval = 60; // 1 minute between products
         $updates = 0;
+        // Assign new dates and menu_order only to changed products and those after
         foreach ($order as $i => $pid) {
             if ($i < $changed_index) continue;
-            // Assign date: most recent for top, older for next, etc.
             $new_ts = $now_ts - ($i - $changed_index) * $interval;
-            // Don't go into the future
             if ($new_ts > $now_ts) $new_ts = $now_ts;
             $new_date = date('Y-m-d H:i:s', $new_ts);
-            // Only update if different
             $post = get_post($pid);
+            $update_args = array(
+                'ID' => $pid,
+                'menu_order' => $i, // set menu_order to match visual order
+            );
+            // Only update post_date if different
             if ($post && $post->post_date != $new_date) {
-                wp_update_post(array(
-                    'ID' => $pid,
-                    'post_date' => $new_date,
-                    'post_date_gmt' => get_gmt_from_date($new_date),
-                ));
-                $updates++;
+                $update_args['post_date'] = $new_date;
+                $update_args['post_date_gmt'] = get_gmt_from_date($new_date);
             }
+            wp_update_post($update_args);
+            $updates++;
         }
         wp_send_json_success("Updated $updates products.");
     }
