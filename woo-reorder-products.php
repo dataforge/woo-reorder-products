@@ -229,7 +229,6 @@ class WooCommerce_Reorder_Products_Plugin {
             $post = get_post($pid);
             $update_args = array(
                 'ID' => $pid,
-                'menu_order' => $i, // set menu_order to match visual order
             );
             // Only update post_date if different
             if ($post && $post->post_date != $new_date) {
