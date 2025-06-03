@@ -89,56 +89,36 @@ class WooCommerce_Reorder_Products_Plugin {
             wp_die('You do not have permission to access this page.');
         }
 
-        // --- Begin Plugin Update Check & Settings Section ---
+        // --- Begin Tabbed Interface ---
         // Handle "Check for Plugin Updates" button
+        $update_msg = '';
         if (isset($_POST['woo_inv_to_rs_check_update']) && check_admin_referer('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce')) {
-            // Simulate the cron event for plugin update check
             do_action('wp_update_plugins');
             if (function_exists('wp_clean_plugins_cache')) {
                 wp_clean_plugins_cache(true);
             }
-            // Remove the update_plugins transient to force a check
             delete_site_transient('update_plugins');
-            // Call the update check directly as well
             if (function_exists('wp_update_plugins')) {
                 wp_update_plugins();
             }
-            // Get update info
             $plugin_file = plugin_basename(__FILE__);
             $update_plugins = get_site_transient('update_plugins');
-            $update_msg = '';
             if (isset($update_plugins->response) && isset($update_plugins->response[$plugin_file])) {
                 $new_version = $update_plugins->response[$plugin_file]->new_version;
                 $update_msg = '<div class="updated"><p>Update available: version ' . esc_html($new_version) . '.</p></div>';
             } else {
                 $update_msg = '<div class="updated"><p>No update available for this plugin.</p></div>';
             }
-            echo $update_msg;
         }
-        // For demonstration, $masked_key is empty (no API key logic yet)
-        $masked_key = '';
         ?>
         <div class="wrap">
-            <h2>RepairShopr API Settings</h2>
-            <form method="post" action="">
-                <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
-                <table class="form-table">
-                    <tr>
-                        <th><label for="woo_inv_to_rs_api_key">API Key</label></th>
-                        <td>
-                            <input type="text" id="woo_inv_to_rs_api_key" name="woo_inv_to_rs_api_key" value="<?php echo esc_attr($masked_key); ?>" class="regular-text" autocomplete="off">
-                            <p class="description">For security, only the last 4 characters are shown. Enter a new key to update.</p>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button(); ?>
-            </form>
-            <form method="post" action="" style="margin-top:2em;">
-                <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
-                <input type="hidden" name="woo_inv_to_rs_check_update" value="1">
-                <?php submit_button('Check for Plugin Updates', 'secondary'); ?>
-            </form>
-        </div>
+            <h1>Woo Reorder Products</h1>
+            <h2 class="nav-tab-wrapper" id="woo-reorder-products-tabs">
+                <a href="#woo-reorder-products-main" class="nav-tab nav-tab-active" id="woo-reorder-products-main-tab">Main</a>
+                <a href="#woo-reorder-products-settings" class="nav-tab" id="woo-reorder-products-settings-tab">Settings</a>
+            </h2>
+            <div id="woo-reorder-products-main-panel" class="woo-reorder-products-tab-panel" style="display:block;">
+                <p>Drag and drop products to reorder them. The top item will be the most recent. Click "Save" to apply the new order.</p>
         <?php
         // --- End Plugin Update Check & Settings Section ---
 
@@ -153,8 +133,6 @@ class WooCommerce_Reorder_Products_Plugin {
             'fields'         => 'ids',
         );
         $product_ids = get_posts($args);
-        echo '<div class="wrap"><h1>WooCommerce Reorder Products</h1>';
-        echo '<p>Drag and drop products to reorder them. The top item will be the most recent. Click "Save" to apply the new order.</p>';
         echo '<ul id="woo-reorder-products-list">';
         $i = 1;
         foreach ($product_ids as $pid) {
@@ -174,7 +152,36 @@ class WooCommerce_Reorder_Products_Plugin {
         echo '<input type="hidden" id="woo-reorder-products-nonce" value="' . esc_attr(wp_create_nonce('woo_reorder_products_save')) . '">';
         echo '<button class="button button-primary" id="woo-reorder-products-save">Save</button>';
         echo '<div id="woo-reorder-products-message"></div>';
-        echo '</div>';
+        ?>
+            </div>
+            <div id="woo-reorder-products-settings-panel" class="woo-reorder-products-tab-panel" style="display:none;">
+                <?php if (!empty($update_msg)) echo $update_msg; ?>
+                <form method="post" action="">
+                    <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
+                    <input type="hidden" name="woo_inv_to_rs_check_update" value="1">
+                    <?php submit_button('Check for Plugin Updates', 'secondary'); ?>
+                </form>
+            </div>
+        </div>
+        <script>
+        (function($){
+            $('#woo-reorder-products-main-tab').on('click', function(e){
+                e.preventDefault();
+                $('.nav-tab').removeClass('nav-tab-active');
+                $(this).addClass('nav-tab-active');
+                $('#woo-reorder-products-main-panel').show();
+                $('#woo-reorder-products-settings-panel').hide();
+            });
+            $('#woo-reorder-products-settings-tab').on('click', function(e){
+                e.preventDefault();
+                $('.nav-tab').removeClass('nav-tab-active');
+                $(this).addClass('nav-tab-active');
+                $('#woo-reorder-products-main-panel').hide();
+                $('#woo-reorder-products-settings-panel').show();
+            });
+        })(jQuery);
+        </script>
+        <?php
     }
 
     public function save_order() {
