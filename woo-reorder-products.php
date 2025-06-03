@@ -88,6 +88,60 @@ class WooCommerce_Reorder_Products_Plugin {
         if (!current_user_can('manage_woocommerce')) {
             wp_die('You do not have permission to access this page.');
         }
+
+        // --- Begin Plugin Update Check & Settings Section ---
+        // Handle "Check for Plugin Updates" button
+        if (isset($_POST['woo_inv_to_rs_check_update']) && check_admin_referer('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce')) {
+            // Simulate the cron event for plugin update check
+            do_action('wp_update_plugins');
+            if (function_exists('wp_clean_plugins_cache')) {
+                wp_clean_plugins_cache(true);
+            }
+            // Remove the update_plugins transient to force a check
+            delete_site_transient('update_plugins');
+            // Call the update check directly as well
+            if (function_exists('wp_update_plugins')) {
+                wp_update_plugins();
+            }
+            // Get update info
+            $plugin_file = plugin_basename(__FILE__);
+            $update_plugins = get_site_transient('update_plugins');
+            $update_msg = '';
+            if (isset($update_plugins->response) && isset($update_plugins->response[$plugin_file])) {
+                $new_version = $update_plugins->response[$plugin_file]->new_version;
+                $update_msg = '<div class="updated"><p>Update available: version ' . esc_html($new_version) . '.</p></div>';
+            } else {
+                $update_msg = '<div class="updated"><p>No update available for this plugin.</p></div>';
+            }
+            echo $update_msg;
+        }
+        // For demonstration, $masked_key is empty (no API key logic yet)
+        $masked_key = '';
+        ?>
+        <div class="wrap">
+            <h2>RepairShopr API Settings</h2>
+            <form method="post" action="">
+                <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th><label for="woo_inv_to_rs_api_key">API Key</label></th>
+                        <td>
+                            <input type="text" id="woo_inv_to_rs_api_key" name="woo_inv_to_rs_api_key" value="<?php echo esc_attr($masked_key); ?>" class="regular-text" autocomplete="off">
+                            <p class="description">For security, only the last 4 characters are shown. Enter a new key to update.</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button(); ?>
+            </form>
+            <form method="post" action="" style="margin-top:2em;">
+                <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
+                <input type="hidden" name="woo_inv_to_rs_check_update" value="1">
+                <?php submit_button('Check for Plugin Updates', 'secondary'); ?>
+            </form>
+        </div>
+        <?php
+        // --- End Plugin Update Check & Settings Section ---
+
         // Get parent products (exclude variations)
         $args = array(
             'post_type'      => 'product',
