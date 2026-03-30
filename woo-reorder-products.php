@@ -2,16 +2,22 @@
 /*
 Plugin Name:       Woo Reorder Products
 Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
-Version:           1.10
+Version:           1.11
 Author:            Dataforge
 License:           GPL2
 Text Domain:       woo-reorder-products
-GitHub Plugin URI: https://github.com/dataforge/woo-reorder-products
+Update URI:        https://github.com/dataforge/woo-reorder-products
 */
+
+define( 'WOO_REORDER_PRODUCTS_VERSION', '1.11' );
+define( 'WOO_REORDER_PRODUCTS_FILE', __FILE__ );
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
+Woo_Reorder_Products_Updater::init();
 
 class WooCommerce_Reorder_Products_Plugin {
 
@@ -89,26 +95,9 @@ class WooCommerce_Reorder_Products_Plugin {
             wp_die('You do not have permission to access this page.');
         }
 
-        // --- Begin Tabbed Interface ---
-        // Handle "Check for Plugin Updates" button
         $update_msg = '';
-        if (isset($_POST['woo_inv_to_rs_check_update']) && check_admin_referer('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce')) {
-            do_action('wp_update_plugins');
-            if (function_exists('wp_clean_plugins_cache')) {
-                wp_clean_plugins_cache(true);
-            }
-            delete_site_transient('update_plugins');
-            if (function_exists('wp_update_plugins')) {
-                wp_update_plugins();
-            }
-            $plugin_file = plugin_basename(__FILE__);
-            $update_plugins = get_site_transient('update_plugins');
-            if (isset($update_plugins->response) && isset($update_plugins->response[$plugin_file])) {
-                $new_version = $update_plugins->response[$plugin_file]->new_version;
-                $update_msg = '<div class="updated"><p>Update available: version ' . esc_html($new_version) . '.</p></div>';
-            } else {
-                $update_msg = '<div class="updated"><p>No update available for this plugin.</p></div>';
-            }
+        if ( isset( $_GET['update_check'] ) ) {
+            $update_msg = '<div class="updated"><p>Update check complete. If an update is available it will appear in <a href="' . esc_url( admin_url( 'update-core.php' ) ) . '">Dashboard &rsaquo; Updates</a>.</p></div>';
         }
         ?>
         <div class="wrap">
@@ -156,10 +145,10 @@ class WooCommerce_Reorder_Products_Plugin {
             </div>
             <div id="woo-reorder-products-settings-panel" class="woo-reorder-products-tab-panel" style="display:none;">
                 <?php if (!empty($update_msg)) echo $update_msg; ?>
-                <form method="post" action="">
-                    <?php wp_nonce_field('woo_inv_to_rs_settings_nonce', 'woo_inv_to_rs_settings_nonce'); ?>
-                    <input type="hidden" name="woo_inv_to_rs_check_update" value="1">
-                    <?php submit_button('Check for Plugin Updates', 'secondary'); ?>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <input type="hidden" name="action" value="woo_reorder_products_check_updates" />
+                    <?php wp_nonce_field( 'woo_reorder_products_check_updates' ); ?>
+                    <?php submit_button( 'Check for Plugin Updates', 'secondary' ); ?>
                 </form>
             </div>
         </div>
