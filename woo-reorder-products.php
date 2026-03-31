@@ -2,14 +2,14 @@
 /*
 Plugin Name:       Woo Reorder Products
 Description:       Adds a drag-and-drop interface to reorder WooCommerce products by date.
-Version:           1.11
+Version:           1.12
 Author:            Dataforge
 License:           GPL2
 Text Domain:       woo-reorder-products
 Update URI:        https://github.com/dataforge/woo-reorder-products
 */
 
-define( 'WOO_REORDER_PRODUCTS_VERSION', '1.11' );
+define( 'WOO_REORDER_PRODUCTS_VERSION', '1.12' );
 define( 'WOO_REORDER_PRODUCTS_FILE', __FILE__ );
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -95,10 +95,6 @@ class WooCommerce_Reorder_Products_Plugin {
             wp_die('You do not have permission to access this page.');
         }
 
-        $update_msg = '';
-        if ( isset( $_GET['update_check'] ) ) {
-            $update_msg = '<div class="updated"><p>Update check complete. If an update is available it will appear in <a href="' . esc_url( admin_url( 'update-core.php' ) ) . '">Dashboard &rsaquo; Updates</a>.</p></div>';
-        }
         ?>
         <div class="wrap">
             <h1>Woo Reorder Products</h1>
@@ -144,12 +140,23 @@ class WooCommerce_Reorder_Products_Plugin {
         ?>
             </div>
             <div id="woo-reorder-products-settings-panel" class="woo-reorder-products-tab-panel" style="display:none;">
-                <?php if (!empty($update_msg)) echo $update_msg; ?>
-                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                    <input type="hidden" name="action" value="woo_reorder_products_check_updates" />
-                    <?php wp_nonce_field( 'woo_reorder_products_check_updates' ); ?>
-                    <?php submit_button( 'Check for Plugin Updates', 'secondary' ); ?>
-                </form>
+                <div class="card">
+                    <h2>Plugin Updates</h2>
+                    <p>Current version: <strong>v<?php echo esc_html( WOO_REORDER_PRODUCTS_VERSION ); ?></strong>
+                    <?php if ( isset( $_GET['update_check'] ) ) : ?>
+                        <?php if ( Woo_Reorder_Products_Updater::is_update_available() ) : ?>
+                            &mdash; <span style="color:#b32d2e;">Update available!</span> <a href="<?php echo esc_url( admin_url( 'update-core.php' ) ); ?>">Go to Updates</a>
+                        <?php else : ?>
+                            &mdash; <span style="color:#00a32a;">Up to date</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    </p>
+                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+                        <input type="hidden" name="action" value="woo_reorder_products_check_updates" />
+                        <?php wp_nonce_field( 'woo_reorder_products_check_updates' ); ?>
+                        <button type="submit" class="button">Check for Updates</button>
+                    </form>
+                </div>
             </div>
         </div>
         <script>
