@@ -175,6 +175,9 @@ class WooCommerce_Reorder_Products_Plugin {
                 $('#woo-reorder-products-main-panel').hide();
                 $('#woo-reorder-products-settings-panel').show();
             });
+            if ( new URLSearchParams(window.location.search).has('update_check') ) {
+                $('#woo-reorder-products-settings-tab').trigger('click');
+            }
         })(jQuery);
         </script>
         <?php
