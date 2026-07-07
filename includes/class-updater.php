@@ -16,6 +16,7 @@ class Woo_Reorder_Products_Updater {
 		add_filter( 'upgrader_install_package_result', array( __CLASS__, 'fix_directory' ), 10, 2 );
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
 		add_action( 'admin_post_woo_reorder_products_check_updates', array( __CLASS__, 'handle_check_updates' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( WOO_REORDER_PRODUCTS_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
 	public static function check_update( $update, $plugin_data, $plugin_file, $locales ) {
@@ -28,15 +29,11 @@ class Woo_Reorder_Products_Updater {
 			return $update;
 		}
 
-		$remote_version = ltrim( $release->tag_name, 'v' );
-
-		if ( version_compare( WOO_REORDER_PRODUCTS_VERSION, $remote_version, '>=' ) ) {
-			return $update;
-		}
-
+		$remote_version = (string) preg_replace( '/^v/', '', (string) $release->tag_name );
 		return array(
 			'slug'    => self::SLUG,
 			'version' => $remote_version,
+			'new_version' => $remote_version,
 			'url'     => $release->html_url,
 			'package' => self::get_asset_url( $release ),
 		);
@@ -51,6 +48,13 @@ class Woo_Reorder_Products_Updater {
 			return $result;
 		}
 
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		if ( ! WP_Filesystem() ) {
+			return $result;
+		}
+
 		global $wp_filesystem;
 
 		$expected_dir = trailingslashit( WP_PLUGIN_DIR ) . self::SLUG;
@@ -60,10 +64,24 @@ class Woo_Reorder_Products_Updater {
 			return $result;
 		}
 
+		$backup_dir = '';
+		if ( $wp_filesystem->exists( $expected_dir ) ) {
+			$backup_dir = $expected_dir . '.bak-' . time() . '-' . wp_rand( 1000, 9999 );
+			if ( ! $wp_filesystem->move( $expected_dir, $backup_dir, true ) ) {
+				return $result;
+			}
+		}
+
 		if ( $wp_filesystem->move( $actual_dir, $expected_dir, true ) ) {
 			$result['destination']        = $expected_dir;
 			$result['destination_name']   = self::SLUG;
 			$result['remote_destination'] = $expected_dir;
+
+			if ( '' !== $backup_dir && $wp_filesystem->exists( $backup_dir ) ) {
+				$wp_filesystem->delete( $backup_dir, true );
+			}
+		} elseif ( '' !== $backup_dir ) {
+			$wp_filesystem->move( $backup_dir, $expected_dir, true );
 		}
 
 		return $result;
@@ -83,7 +101,7 @@ class Woo_Reorder_Products_Updater {
 			return $result;
 		}
 
-		$remote_version = ltrim( $release->tag_name, 'v' );
+		$remote_version = (string) preg_replace( '/^v/', '', (string) $release->tag_name );
 
 		$info               = new stdClass();
 		$info->name         = 'Woo Reorder Products';
@@ -115,7 +133,7 @@ class Woo_Reorder_Products_Updater {
 		$release = self::fetch_latest_release();
 		$status  = 'up_to_date';
 		if ( $release ) {
-			$remote_version = ltrim( $release->tag_name, 'v' );
+			$remote_version = (string) preg_replace( '/^v/', '', (string) $release->tag_name );
 			if ( version_compare( WOO_REORDER_PRODUCTS_VERSION, $remote_version, '<' ) ) {
 				$status = 'update_available';
 			}
@@ -126,18 +144,30 @@ class Woo_Reorder_Products_Updater {
 	}
 
 	public static function is_update_available() {
-		$release = get_transient( self::CACHE_KEY );
+		$release = self::fetch_latest_release();
 		if ( ! $release || empty( $release->tag_name ) ) {
 			return false;
 		}
-		$remote_version = ltrim( $release->tag_name, 'v' );
+
+		$remote_version = (string) preg_replace( '/^v/', '', (string) $release->tag_name );
+
 		return version_compare( WOO_REORDER_PRODUCTS_VERSION, $remote_version, '<' );
+	}
+
+	public static function action_links( $links ) {
+		$url  = wp_nonce_url(
+			admin_url( 'admin-post.php?action=woo_reorder_products_check_updates' ),
+			'woo_reorder_products_check_updates'
+		);
+		$link = '<a href="' . esc_url( $url ) . '">Check for Updates</a>';
+		array_unshift( $links, $link );
+		return $links;
 	}
 
 	private static function get_asset_url( $release ) {
 		if ( ! empty( $release->assets ) ) {
 			foreach ( $release->assets as $asset ) {
-				if ( '.zip' === substr( $asset->name, -4 ) ) {
+				if ( '.zip' === strtolower( substr( $asset->name, -4 ) ) ) {
 					return $asset->browser_download_url;
 				}
 			}
@@ -146,11 +176,14 @@ class Woo_Reorder_Products_Updater {
 	}
 
 	private static function fetch_latest_release() {
-		$force = isset( $_GET['force-check'] ) || ( defined( 'DOING_CRON' ) && DOING_CRON );
+		$force = ! empty( $_GET['force-check'] ) || ( defined( 'DOING_CRON' ) && DOING_CRON ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! $force ) {
 			$cached = get_transient( self::CACHE_KEY );
 			if ( false !== $cached ) {
-				return 'error' === $cached ? false : $cached;
+				if ( is_array( $cached ) && ! empty( $cached['__error'] ) ) {
+					return false;
+				}
+				return $cached;
 			}
 		}
 
@@ -165,18 +198,33 @@ class Woo_Reorder_Products_Updater {
 		) );
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::CACHE_KEY, 'error', 5 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE_KEY, array( '__error' => true ), 5 * MINUTE_IN_SECONDS );
 			return false;
 		}
 
 		$release = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( ! $release || empty( $release->tag_name ) ) {
-			set_transient( self::CACHE_KEY, 'error', 5 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE_KEY, array( '__error' => true ), 5 * MINUTE_IN_SECONDS );
 			return false;
 		}
 
-		set_transient( self::CACHE_KEY, $release, self::CACHE_TTL );
+		$slim              = new stdClass();
+		$slim->tag_name    = $release->tag_name;
+		$slim->html_url    = $release->html_url ?? '';
+		$slim->body        = $release->body ?? '';
+		$slim->zipball_url = $release->zipball_url ?? '';
+		$slim->assets      = array();
+		if ( ! empty( $release->assets ) && is_array( $release->assets ) ) {
+			foreach ( $release->assets as $asset ) {
+				$a                       = new stdClass();
+				$a->name                 = $asset->name ?? '';
+				$a->browser_download_url = $asset->browser_download_url ?? '';
+				$slim->assets[]          = $a;
+			}
+		}
 
-		return $release;
+		set_transient( self::CACHE_KEY, $slim, self::CACHE_TTL );
+
+		return $slim;
 	}
 }
